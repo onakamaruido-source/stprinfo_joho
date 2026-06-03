@@ -1,64 +1,93 @@
-const CACHE_NAME =
-"stpr-v1";
+const CACHE_NAME = "stpr-v2";
 
 const urlsToCache = [
+  "/",
+  "/index.html",
 
-"/",
-"/index.html",
-"/news.html",
-"/live.html",
-"/ivent.html",
-"/style.css",
-"/main.js"
+  "/assets/css/style.css",
+  "/assets/js/main.js",
 
+  "/assets/img/logo.png",
+  "/assets/img/icon-192.png",
+  "/assets/img/icon-512.png"
 ];
 
-self.addEventListener(
+// インストール
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
 
-"install",
+  self.skipWaiting();
+});
 
-event=>{
+// 古いキャッシュ削除
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
+  );
 
-event.waitUntil(
+  self.clients.claim();
+});
 
-caches.open(CACHE_NAME)
+// リクエスト処理
+self.addEventListener("fetch", event => {
 
-.then(cache=>{
+  const url = new URL(event.request.url);
 
-return cache.addAll(
-urlsToCache
-);
+  // HTMLは常に最新を取得
+  if (
+    event.request.mode === "navigate" ||
+    url.pathname.endsWith(".html")
+  ) {
 
-})
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
 
-);
+    return;
+  }
 
-}
+  // CSS・JS・画像はキャッシュ優先
+  event.respondWith(
+    caches.match(event.request)
+      .then(cached => {
+        if (cached) {
+          return cached;
+        }
 
-);
+        return fetch(event.request)
+          .then(response => {
 
-self.addEventListener(
+            if (
+              response &&
+              response.status === 200
+            ) {
+              const clone = response.clone();
 
-"fetch",
+              caches.open(CACHE_NAME)
+                .then(cache => {
+                  cache.put(event.request, clone);
+                });
+            }
 
-event=>{
-
-event.respondWith(
-
-caches.match(
-event.request
-)
-
-.then(response=>{
-
-return response ||
-fetch(
-event.request
-);
-
-})
-
-);
-
-}
-);
+            return response;
+          });
+      })
+  );
+});
