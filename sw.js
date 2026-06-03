@@ -1,4 +1,4 @@
-const CACHE_NAME = "stpr-v3";
+const CACHE_NAME = "stpr-v4";
 
 const urlsToCache = [
   "/",
@@ -26,12 +26,9 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys => {
+      console.log(keys);
       return Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
+        keys.map(key => caches.delete(key))
       );
     })
   );
