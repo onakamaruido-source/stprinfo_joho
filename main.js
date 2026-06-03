@@ -153,10 +153,6 @@ window.addEventListener(
 
 ()=>{
 
-navigator.serviceWorker.register(
-"sw.js"
-);
-
 }
 
 );
