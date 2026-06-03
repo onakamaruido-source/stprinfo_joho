@@ -1,4 +1,4 @@
-const CACHE_NAME = "stpr-v2";
+const CACHE_NAME = "stpr-v3";
 
 const urlsToCache = [
   "/",
